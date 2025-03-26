@@ -123,27 +123,22 @@ function generateMixed(length) {
 
 function updateOutput() {
   const selectedCount = checkStates.filter((state) => state).length;
+  generatedPassword.style.color = 'var(--Almost-White)';
 
   if (selectedCount === listItem.length) {
     generatedPassword.textContent = generateMixed(currentValue);
-  } else if (selectedCount === 1) {
-    const selectedIndex = checkStates.indexOf(true);
-    switch (selectedIndex) {
-      case 0:
-        generatedPassword.textContent = generateRandom(upperCase, currentValue);
-        break;
-      case 1:
-        generatedPassword.textContent = generateRandom(lowerCase, currentValue);
-        break;
-      case 2:
-        generatedPassword.textContent = generateRandom(symbols, currentValue);
-        break;
-      case 3:
-        generatedPassword.textContent = generateRandom(number, currentValue);
-        break;
-    }
-  } else {
-    console.log('Select an option!');
+  } else if (selectedCount >= 1) {
+    const selectedCategories = [];
+    if (checkStates[0]) selectedCategories.push(upperCase);
+    if (checkStates[1]) selectedCategories.push(lowerCase);
+    if (checkStates[2]) selectedCategories.push(symbols);
+    if (checkStates[3]) selectedCategories.push(number);
+
+    const allSelectedChars = selectedCategories.flat();
+    generatedPassword.textContent = generateRandom(
+      allSelectedChars,
+      currentValue
+    );
   }
 }
 
@@ -160,12 +155,82 @@ listItem.forEach((item, index) => {
       : '';
     const checked = item.querySelector('.checked');
     checked.style.display = checkStates[index] ? 'block' : 'none';
-
-    //Checking items that was selected
-    updateOutput();
   });
 });
 
 generateButton.addEventListener('click', () => {
   updateOutput();
+  testPassWordStrength();
 });
+
+const copySvg = document.getElementById('copy');
+
+copySvg.addEventListener('click', () => {
+  const passwordText = generatedPassword.textContent;
+
+  if (passwordText && passwordText !== '') {
+    navigator.clipboard.writeText(passwordText).then(() => {
+      //success feedback
+      document.getElementById('copy-path').style.fill = 'var(--Neon-green)';
+      const copiedFeedback = document.getElementById('copied');
+      copiedFeedback.style.display = 'block';
+      setTimeout(() => {
+        copySvg.style.fill = '';
+      }, 1000);
+    });
+  }
+});
+
+function testPassWordStrength() {
+  const strength = ['TOO WEAK', 'WEAK', 'MEDIUM', 'STRONG'];
+  const selectedCount = checkStates.filter((state) => state).length;
+  const displayStrength = document.getElementById('text-response');
+  const allBars = document.querySelectorAll('.bars');
+
+  allBars.forEach((bar) => {
+    bar.style.backgroundColor = '';
+    bar.style.border = '';
+  });
+
+  let strengthLevel = 0;
+
+  if (
+    selectedCount === 1 &&
+    checkStates[0] &&
+    !checkStates[1] &&
+    !checkStates[2] &&
+    !checkStates[3]
+  ) {
+    if (currentValue < 5) {
+      strengthLevel = 0;
+    } else if (currentValue <= 15) {
+      strengthLevel = 1;
+    } else {
+      strengthLevel = 2;
+    }
+  } else {
+    if (currentValue >= 15 && selectedCount > 3) {
+      strengthLevel = 3;
+    } else if (currentValue >= 10 && selectedCount >= 2) {
+      strengthLevel = 2;
+    } else if (currentValue >= 6 && selectedCount >= 1) {
+      strengthLevel = 1;
+    } else {
+      strengthLevel = 0;
+    }
+  }
+
+  displayStrength.textContent = strength[strengthLevel];
+
+  const colors = [
+    'var(--red)',
+    'var(--orange)',
+    'var(--yelow)',
+    'var(--Neon-green)',
+  ];
+
+  for (let i = 0; i <= strengthLevel; i++) {
+    allBars[i].style.backgroundColor = colors[strengthLevel];
+    allBars[i].style.border = `0 solid ${colors[strengthLevel]}`;
+  }
+}

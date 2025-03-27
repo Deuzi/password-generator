@@ -89,11 +89,30 @@ document.addEventListener('mousemove', (e) => {
   if (isDragging) {
     updateSliderValue(e);
     e.preventDefault();
-    updateOutput();
   }
 });
 
+//touch event for dragging
+sliderThumb.addEventListener('touchstart', () => {
+  isDragging = true;
+});
+
+document.addEventListener('touchmove', (e) => {
+  if (isDragging) {
+    updateSliderValue(e);
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('touchend', () => {
+  isDragging = false;
+});
+
 sliderTrack.addEventListener('click', (e) => {
+  updateSliderValue(e);
+});
+
+sliderTrack.addEventListener('touchstart', (e) => {
   updateSliderValue(e);
 });
 
@@ -121,11 +140,14 @@ function generateMixed(length) {
   return result;
 }
 
+//update output
 function updateOutput() {
   const selectedCount = checkStates.filter((state) => state).length;
   generatedPassword.style.color = 'var(--Almost-White)';
 
-  if (selectedCount === listItem.length) {
+  if (currentValue === 0 || selectedCount === 0) {
+    generatedPassword.textContent = '';
+  } else if (selectedCount === listItem.length) {
     generatedPassword.textContent = generateMixed(currentValue);
   } else if (selectedCount >= 1) {
     const selectedCategories = [];
@@ -159,8 +181,12 @@ listItem.forEach((item, index) => {
 });
 
 generateButton.addEventListener('click', () => {
+  generateButton.classList.add('active');
   updateOutput();
   testPassWordStrength();
+  setTimeout(() => {
+    generateButton.classList.remove('active');
+  }, 500);
 });
 
 const copySvg = document.getElementById('copy');
@@ -175,10 +201,12 @@ copySvg.addEventListener('click', () => {
       const copiedFeedback = document.getElementById('copied');
       copiedFeedback.style.display = 'block';
       setTimeout(() => {
-        copySvg.style.fill = '';
+        copySvg.style.fill = '#A4FFAF';
+        copiedFeedback.style.display = '';
       }, 1000);
     });
   }
+  reset();
 });
 
 function testPassWordStrength() {
@@ -225,7 +253,7 @@ function testPassWordStrength() {
   const colors = [
     'var(--red)',
     'var(--orange)',
-    'var(--yelow)',
+    'var(--yellow)',
     'var(--Neon-green)',
   ];
 
@@ -233,4 +261,37 @@ function testPassWordStrength() {
     allBars[i].style.backgroundColor = colors[strengthLevel];
     allBars[i].style.border = `0 solid ${colors[strengthLevel]}`;
   }
+}
+
+function reset() {
+  //SLIDER TO DEFAULT
+  currentValue = 0;
+  updateSlider();
+
+  //generated password to default
+  generatedPassword.textContent = ' P4$5W0rD! ';
+  generatedPassword.style.color = 'var(--Grey)';
+
+  //passowrd strength to defult
+  const displayStrength = document.getElementById('text-response');
+  displayStrength.textContent = '';
+
+  //bars color to default
+  const allBars = document.querySelectorAll('.bars');
+  allBars.forEach((bar) => {
+    bar.style.backgroundColor = '';
+    bar.style.border = '';
+  });
+
+  // checkbox to default
+  listItem.forEach((item, index) => {
+    checkStates[index] = false;
+
+    const checkbox = item.querySelector('.checkbox');
+    checkbox.style.backgroundColor = '';
+    checkbox.style.border = '';
+
+    const checked = item.querySelector('.checked');
+    checked.style.display = 'none';
+  });
 }
